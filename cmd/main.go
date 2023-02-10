@@ -15,7 +15,10 @@ var (
 	timerMap = map[string]*timer.Timer{}
 )
 
-func hello(c echo.Context) error {
+func readTimer(c echo.Context) error {
+
+	timerId := c.Param("id")
+
 	ws, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
 	if err != nil {
 		return err
@@ -24,17 +27,19 @@ func hello(c echo.Context) error {
 
 	for {
 		// Write
-		err := ws.WriteMessage(websocket.TextMessage, []byte("Hello, Client!"))
+		err := ws.WriteMessage(websocket.TextMessage, []byte(
+			strconv.Itoa(timerMap[timerId].GetRemain())),
+		)
 		if err != nil {
 			c.Logger().Error(err)
 		}
 
 		// Read
-		_, msg, err := ws.ReadMessage()
-		if err != nil {
-			c.Logger().Error(err)
-		}
-		fmt.Printf("%s\n", msg)
+		// _, msg, err := ws.ReadMessage()
+		// if err != nil {
+		// 	c.Logger().Error(err)
+		// }
+		// fmt.Printf("%s\n", msg)
 	}
 }
 
@@ -85,7 +90,7 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 	e.Static("/", "../public")
-	e.GET("/ws", hello)
+	e.GET("/timer:id", readTimer)
 	e.GET("/init:id", initTimer)
 	e.GET("/start:id", startTimer)
 	e.GET("/stop:id", stopTimer)
