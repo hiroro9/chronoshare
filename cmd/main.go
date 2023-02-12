@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/hiroro9/chronoshare/pkg/timer"
@@ -11,7 +13,11 @@ import (
 )
 
 var (
-	upgrader = websocket.Upgrader{}
+	upgrader = websocket.Upgrader{
+		CheckOrigin: func(r *http.Request) bool {
+			return true
+		},
+	}
 	timerMap = map[string]*timer.Timer{}
 )
 
@@ -27,22 +33,27 @@ func readTimer(c echo.Context) error {
 
 	for {
 		// Write
-		err := ws.WriteMessage(websocket.TextMessage, []byte(
-			strconv.Itoa(timerMap[timerId].GetRemain())),
+		err := ws.WriteMessage(
+			websocket.TextMessage,
+			[]byte(strconv.Itoa(timerMap[timerId].GetRemain())),
 		)
+
 		if err != nil {
 			c.Logger().Error(err)
 		}
 
-		// Read
-		// _, msg, err := ws.ReadMessage()
-		// if err != nil {
-		// 	c.Logger().Error(err)
-		// }
-		// fmt.Printf("%s\n", msg)
+		c.Logger().Info(strconv.Itoa(timerMap[timerId].GetRemain()))
+		time.Sleep(100000000)
 	}
+
 }
 
+func readTimerHttp(c echo.Context) error {
+	timerId := c.Param("id")
+	return c.String(200, fmt.Sprintf("%d \n", timerMap[timerId].GetRemain()))
+}
+
+// Initialize Timer
 func initTimer(c echo.Context) error {
 	timerId := c.Param("id")
 	remain, err := strconv.Atoi(c.QueryParam("remain"))
@@ -85,16 +96,25 @@ func restartTimer(c echo.Context) error {
 	return c.String(200, fmt.Sprintf("restart %s \n", timerId))
 }
 
+func resetTimer(c echo.Context) error {
+	timerId := c.Param("id")
+	timerMap[timerId].Reset()
+	return c.String(200, fmt.Sprintf("reset %s \n", timerId))
+}
+
 func main() {
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
+	e.Use(middleware.CORS())
 	e.Static("/", "../public")
 	e.GET("/timer:id", readTimer)
+	e.GET("/read:id", readTimerHttp)
 	e.GET("/init:id", initTimer)
 	e.GET("/start:id", startTimer)
 	e.GET("/stop:id", stopTimer)
 	e.GET("/restart:id", restartTimer)
+	e.GET("/reset:id", resetTimer)
 	e.GET("/timerMap", getAllTimer)
 	e.Logger.Fatal(e.Start(":8080"))
 }

@@ -5,14 +5,15 @@ import (
 )
 
 type Timer struct {
-	id     string
-	remain int
-	stop   bool
+	id         string // unique identifier
+	initRemain int
+	remain     int
+	stop       bool
 }
 
 func (t *Timer) Start() {
 
-	for t.remain >= 0 {
+	for {
 		if !t.stop {
 			t.remain -= 1
 		}
@@ -26,6 +27,10 @@ func (t *Timer) Stop() {
 
 func (t *Timer) Restart() {
 	t.stop = false
+}
+
+func (t *Timer) Reset() {
+	t.remain = t.initRemain
 }
 
 func (t *Timer) GetId() string {
@@ -46,8 +51,9 @@ func (t *Timer) SetRemain(remain int) {
 
 func NewTimer(id string, remain int) *Timer {
 	return &Timer{
-		id:     id,
-		remain: remain,
-		stop:   false,
+		id:         id,
+		initRemain: remain,
+		remain:     remain,
+		stop:       false,
 	}
 }
