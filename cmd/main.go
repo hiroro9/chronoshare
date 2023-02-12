@@ -48,11 +48,6 @@ func readTimer(c echo.Context) error {
 
 }
 
-func readTimerHttp(c echo.Context) error {
-	timerId := c.Param("id")
-	return c.String(200, fmt.Sprintf("%d \n", timerMap[timerId].GetRemain()))
-}
-
 // Initialize Timer
 func initTimer(c echo.Context) error {
 	timerId := c.Param("id")
@@ -70,6 +65,8 @@ func initTimer(c echo.Context) error {
 		return c.JSON(200, newTimer.GetRemain())
 	}
 
+	go timerMap[timerId].Run()
+
 	return c.JSON(200, existingTimer.GetRemain())
 
 }
@@ -78,21 +75,15 @@ func getAllTimer(c echo.Context) error {
 	return c.JSON(200, timerMap)
 }
 
-func startTimer(c echo.Context) error {
-	timerId := c.Param("id")
-	go timerMap[timerId].Start()
-	return c.String(200, fmt.Sprintf("start %s \n", timerId))
-}
-
 func stopTimer(c echo.Context) error {
 	timerId := c.Param("id")
 	timerMap[timerId].Stop()
 	return c.String(200, fmt.Sprintf("stop %s \n", timerId))
 }
 
-func restartTimer(c echo.Context) error {
+func startTimer(c echo.Context) error {
 	timerId := c.Param("id")
-	timerMap[timerId].Restart()
+	timerMap[timerId].Start()
 	return c.String(200, fmt.Sprintf("restart %s \n", timerId))
 }
 
@@ -109,11 +100,9 @@ func main() {
 	e.Use(middleware.CORS())
 	e.Static("/", "../public")
 	e.GET("/timer:id", readTimer)
-	e.GET("/read:id", readTimerHttp)
 	e.GET("/init:id", initTimer)
-	e.GET("/start:id", startTimer)
 	e.GET("/stop:id", stopTimer)
-	e.GET("/restart:id", restartTimer)
+	e.GET("/start:id", startTimer)
 	e.GET("/reset:id", resetTimer)
 	e.GET("/timerMap", getAllTimer)
 	e.Logger.Fatal(e.Start(":8080"))

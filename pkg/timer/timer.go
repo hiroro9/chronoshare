@@ -11,7 +11,7 @@ type Timer struct {
 	stop       bool
 }
 
-func (t *Timer) Start() {
+func (t *Timer) Run() {
 
 	for {
 		if !t.stop {
@@ -25,7 +25,7 @@ func (t *Timer) Stop() {
 	t.stop = true
 }
 
-func (t *Timer) Restart() {
+func (t *Timer) Start() {
 	t.stop = false
 }
 
@@ -54,6 +54,6 @@ func NewTimer(id string, remain int) *Timer {
 		id:         id,
 		initRemain: remain,
 		remain:     remain,
-		stop:       false,
+		stop:       true,
 	}
 }
