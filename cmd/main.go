@@ -42,8 +42,7 @@ func readTimer(c echo.Context) error {
 			c.Logger().Error(err)
 		}
 
-		c.Logger().Info(strconv.Itoa(timerMap[timerId].GetRemain()))
-		time.Sleep(100000000)
+		time.Sleep(10000000)
 	}
 
 }
